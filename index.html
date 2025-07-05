@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Digital Safety Hero Quest</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Fredoka+One&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        .header-font {
+            font-family: 'Fredoka One', cursive;
+        }
+        .hidden {
+            display: none;
+        }
+        .answer-btn {
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        .answer-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.2);
+        }
+        .answer-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transition: left 0.5s;
+        }
+        .answer-btn:hover::before {
+            left: 100%;
+        }
+        .answer-btn.correct {
+            background: linear-gradient(135deg, #10b981, #059669) !important;
+            border-color: #047857 !important;
+            color: white;
+            transform: scale(1.05);
+        }
+        .answer-btn.wrong {
+            background: linear-gradient(135deg, #ef4444, #dc2626) !important;
+            border-color: #b91c1c !important;
+            color: white;
+            transform: scale(0.95);
+        }
+        .timer-bar {
+            transition: width 0.5s linear;
+            background: linear-gradient(90deg, #3b82f6, #1d4ed8);
+        }
+        .modal-content {
+            animation: zoomIn 0.3s ease-out;
+        }
+        @keyframes zoomIn {
+            from { opacity: 0; transform: scale(0.8); }
+            to { opacity: 1; transform: scale(1); }
+        }
+        .medal {
+            animation: popIn 0.5s ease-out 0.5s backwards;
+        }
+        @keyframes popIn {
+            from { opacity: 0; transform: scale(0.5) rotate(-15deg); }
+            to { opacity: 1; transform: scale(1) rotate(0deg); }
+        }
+        .hero-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border: 2px solid rgba(255, 255, 255, 0.2);
+        }
+        .level-badge {
+            background: linear-gradient(135deg, #fbbf24, #f59e0b);
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+        .power-up {
+            animation: float 3s ease-in-out infinite;
+        }
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+        }
+    </style>
+</head>
+<body class="min-h-screen flex items-center justify-center p-4">
+
+    <div class="hero-card p-6 sm:p-8 rounded-2xl shadow-2xl w-full max-w-2xl mx-auto">
+
+        <!-- Homepage Section -->
+        <div id="homepage">
+            <header class="text-center mb-6">
+                <h1 class="header-font text-4xl sm:text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-blue-600 mb-2">Digital Safety Hero Quest</h1>
+                <p class="text-lg text-slate-600">Become the ultimate Digital Safety Champion!</p>
+            </header>
+
+            <div class="text-center bg-gradient-to-r from-purple-50 to-blue-50 p-4 rounded-lg mb-6 shadow-inner">
+                <p class="text-slate-700 font-semibold">🏆 Hero's Best Score</p>
+                <p id="high-score" class="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-blue-600">0</p>
+            </div>
+
+            <div class="mb-8">
+                <h2 class="text-2xl font-bold text-slate-800 text-center mb-4">🚀 Ready for Your Hero Journey?</h2>
+                <div class="grid grid-cols-1 gap-4">
+                    <button id="start-game-btn" class="bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white font-bold py-6 px-8 rounded-lg shadow-lg transition-all transform hover:scale-105 text-xl">
+                        ⚔️ Begin Your Quest
+                    </button>
+                    <button id="review-btn" class="bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white font-bold py-4 px-6 rounded-lg shadow-lg transition-all transform hover:scale-105">
+                        📚 Review Safety Knowledge
+                    </button>
+                </div>
+            </div>
+
+            <div>
+                <h3 class="text-xl font-bold text-slate-800 text-center mb-3">⚡ Hero's Mission</h3>
+                <ul class="list-disc list-inside text-left text-slate-600 bg-slate-50 p-4 rounded-lg">
+                    <li>Answer questions to gain power and advance through levels!</li>
+                    <li>You have <strong>1 minute</strong> to prove your hero skills.</li>
+                    <li>Correct answers give you time bonuses and power points.</li>
+                    <li>Wrong answers cost you precious time!</li>
+                    <li>Earn medals and become a legendary Digital Safety Hero!</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Review Section -->
+        <div id="review-page" class="hidden">
+            <header class="text-center mb-6">
+                <h2 class="header-font text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-green-600 to-emerald-600 mb-2">📚 Safety Knowledge Review</h2>
+                <p class="text-slate-600">Master these concepts before your quest!</p>
+            </header>
+
+            <div id="review-content" class="space-y-6">
+                <!-- Review content will be generated here -->
+            </div>
+
+            <div class="text-center mt-8">
+                <button id="back-to-home-btn" class="bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white font-bold py-3 px-6 rounded-lg shadow-lg transition-all transform hover:scale-105">
+                    🏠 Back to Hero Hub
+                </button>
+            </div>
+        </div>
+
+        <!-- Quiz Section -->
+        <div id="quiz-page" class="hidden">
+            <div class="flex justify-between items-center mb-4">
+                <div class="flex items-center space-x-4">
+                    <div>
+                        <span class="font-semibold text-slate-600">⚡ Power:</span>
+                        <span id="current-score" class="font-bold text-xl text-purple-600">0</span>
+                    </div>
+                    <div class="level-badge px-3 py-1 rounded-full text-white font-bold">
+                        Level <span id="current-level">1</span>
+                    </div>
+                </div>
+                <div>
+                    <span class="font-semibold text-slate-600">⏰ Time:</span>
+                    <span id="time-display" class="font-bold text-xl text-red-600">60</span>s
+                </div>
+            </div>
+            <div class="w-full bg-gray-200 rounded-full h-4 mb-4 shadow-inner">
+                <div id="timer-bar" class="h-4 rounded-full timer-bar" style="width: 100%;"></div>
+            </div>
+
+            <div id="question-container" class="text-center">
+                <p id="question-text" class="text-xl sm:text-2xl font-semibold text-slate-800 mb-6 min-h-[6rem] flex items-center justify-center"></p>
+                <div id="answers-grid" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <!-- Answer buttons will be generated here -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Level Complete Section -->
+        <div id="level-complete-page" class="hidden text-center">
+            <h2 class="header-font text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-green-600 to-emerald-600 mb-4">🎉 Level Complete!</h2>
+            <div class="mb-6">
+                <p class="text-6xl power-up">⚡</p>
+                <p class="text-2xl font-bold text-slate-700">Power Gained: <span id="level-score" class="text-green-600">0</span></p>
+            </div>
+            <div class="bg-gradient-to-r from-green-50 to-emerald-50 p-6 rounded-lg shadow-inner mb-6">
+                <p class="text-slate-700 text-lg">Ready for the next challenge?</p>
+                <p class="text-3xl font-bold text-green-700 my-2">Level <span id="next-level">2</span> Awaits!</p>
+            </div>
+            <button id="next-level-btn" class="bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white font-bold py-3 px-8 rounded-lg shadow-lg transition-all transform hover:scale-105">
+                🚀 Continue Quest
+            </button>
+        </div>
+
+        <!-- Results Section -->
+        <div id="results-page" class="hidden text-center">
+            <h2 class="header-font text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-blue-600 mb-4">🏆 Quest Complete!</h2>
+            <div id="medal-container" class="mb-6">
+                <p id="medal-emoji" class="text-8xl medal"></p>
+                <p id="medal-text" class="text-2xl font-bold"></p>
+            </div>
+            <div class="bg-gradient-to-r from-purple-50 to-blue-50 p-6 rounded-lg shadow-inner">
+                <p class="text-slate-700 text-lg">Your Hero Power</p>
+                <p id="final-score" class="text-6xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-blue-600 my-2">0</p>
+                <p class="text-slate-600">Best Hero Score: <span id="results-high-score" class="font-semibold">0</span></p>
+            </div>
+            <div class="mt-6 space-y-3">
+                <button id="play-again-btn" class="bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white font-bold py-3 px-8 rounded-lg shadow-lg transition-all transform hover:scale-105 mr-3">
+                    ⚔️ Quest Again
+                </button>
+                <button id="review-after-btn" class="bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white font-bold py-3 px-6 rounded-lg shadow-lg transition-all transform hover:scale-105">
+                    📚 Review Knowledge
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- Sound Effects ---
+        const correctSound = () => new Tone.Synth({ oscillator: { type: "triangle" }, envelope: { attack: 0.005, decay: 0.1, sustain: 0.3, release: 1 } }).toDestination().triggerAttackRelease("C5", "8n");
+        const wrongSound = () => new Tone.Synth({ oscillator: { type: "square" }, envelope: { attack: 0.005, decay: 0.2, sustain: 0, release: 0.2 } }).toDestination().triggerAttackRelease("C3", "8n");
+        const clickSound = () => new Tone.MembraneSynth().toDestination().triggerAttackRelease("C2", "8n", Tone.now());
+        const gameOverSound = () => new Tone.Synth({ oscillator: { type: "sine" }, envelope: { attack: 0.1, decay: 0.5, sustain: 0, release: 0.8 } }).toDestination().triggerAttackRelease("G3", "4n");
+        const levelUpSound = () => new Tone.Synth({ oscillator: { type: "sawtooth" }, envelope: { attack: 0.1, decay: 0.3, sustain: 0.2, release: 0.5 } }).toDestination().triggerAttackRelease("G5", "4n");
+
+        // --- DOM Elements ---
+        const homepage = document.getElementById('homepage');
+        const reviewPage = document.getElementById('review-page');
+        const quizPage = document.getElementById('quiz-page');
+        const levelCompletePage = document.getElementById('level-complete-page');
+        const resultsPage = document.getElementById('results-page');
+        const startGameBtn = document.getElementById('start-game-btn');
+        const reviewBtn = document.getElementById('review-btn');
+        const backToHomeBtn = document.getElementById('back-to-home-btn');
+        const nextLevelBtn = document.getElementById('next-level-btn');
+        const reviewAfterBtn = document.getElementById('review-after-btn');
+        const highScoreDisplay = document.getElementById('high-score');
+        const timeDisplay = document.getElementById('time-display');
+        const timerBar = document.getElementById('timer-bar');
+        const currentScoreDisplay = document.getElementById('current-score');
+        const currentLevelDisplay = document.getElementById('current-level');
+        const questionText = document.getElementById('question-text');
+        const answersGrid = document.getElementById('answers-grid');
+        const finalScoreDisplay = document.getElementById('final-score');
+        const resultsHighScoreDisplay = document.getElementById('results-high-score');
+        const medalEmoji = document.getElementById('medal-emoji');
+        const medalText = document.getElementById('medal-text');
+        const playAgainBtn = document.getElementById('play-again-btn');
+        const reviewContent = document.getElementById('review-content');
+        const levelScoreDisplay = document.getElementById('level-score');
+        const nextLevelDisplay = document.getElementById('next-level');
+
+        // --- Questions Database by Level ---
+        const questionsByLevel = {
+            1: [
+                { q: "What should you do if someone online asks for your password?", a: ["Give it to them", "Tell your parents or teacher", "Make up a fake one", "Ignore the message"], correct: 1, points: 10 },
+                { q: "Is it okay to share your full name with someone you just met online?", a: ["Yes, if they seem nice", "No, never share personal info", "Only if they ask nicely", "Yes, it's just a name"], correct: 1, points: 10 },
+                { q: "What should you do if someone is being mean to you online?", a: ["Be mean back to them", "Tell a trusted adult", "Ignore it completely", "Share it with all your friends"], correct: 1, points: 10 },
+                { q: "If you see something scary or upsetting online, you should:", a: ["Keep it a secret", "Tell your parents or teacher", "Share it with friends", "Close your eyes"], correct: 1, points: 10 },
+                { q: "What's a good way to stay safe online?", a: ["Share everything with friends", "Never talk to anyone online", "Be careful and ask adults for help", "Click on every link you see"], correct: 2, points: 10 },
+            ],
+            2: [
+                { q: "What should you do if a website asks for your phone number?", a: ["Give it to them", "Ask your parents first", "Make up a fake number", "Close the website"], correct: 1, points: 20 },
+                { q: "Is it safe to meet someone in person that you only know online?", a: ["Yes, if they seem nice", "No, never meet online friends alone", "Only if they're your age", "Yes, it's fun to meet new people"], correct: 1, points: 20 },
+                { q: "What should you do if you accidentally share something private online?", a: ["Delete it right away", "Tell your parents immediately", "Hope no one sees it", "Share more to cover it up"], correct: 1, points: 20 },
+                { q: "What's a good password to use?", a: ["Your name", "123456", "A mix of letters and numbers", "Your birthday"], correct: 2, points: 20 },
+                { q: "If someone sends you a mean message, you should:", a: ["Send mean messages back", "Block them and tell an adult", "Share it with everyone", "Ignore it forever"], correct: 1, points: 20 },
+            ],
+            3: [
+                { q: "What should you do if someone asks for your home address online?", a: ["Give it to them", "Never share your address", "Ask why they need it", "Give them a fake address"], correct: 1, points: 30 },
+                { q: "Is it okay to share photos of your friends without asking them?", a: ["Yes, if they're good photos", "No, always ask permission first", "Only if they're not in the photo", "Yes, it's just sharing"], correct: 1, points: 30 },
+                { q: "What should you do if you see someone being bullied online?", a: ["Join in the bullying", "Tell a trusted adult", "Ignore it completely", "Take screenshots and share them"], correct: 1, points: 30 },
+                { q: "If a game asks to access your contacts, you should:", a: ["Allow it immediately", "Ask your parents first", "Delete the game", "Give fake contacts"], correct: 1, points: 30 },
+                { q: "What's the best way to protect your privacy online?", a: ["Share everything with everyone", "Be careful about what you share", "Never use the internet", "Only use public computers"], correct: 1, points: 30 },
+            ]
+        };
+
+        // --- Review Content ---
+        const reviewTopics = {
+            "Password Safety": [
+                "Never share your passwords with anyone, even friends",
+                "Use strong passwords with letters, numbers, and symbols",
+                "Don't use the same password for all accounts",
+                "Change passwords regularly"
+            ],
+            "Online Privacy": [
+                "Never share personal information with strangers",
+                "Be careful about what you post online",
+                "Check privacy settings on social media",
+                "Think before sharing photos or videos"
+            ],
+            "Cyberbullying": [
+                "Cyberbullying is being mean to someone online",
+                "If you see cyberbullying, tell a trusted adult",
+                "Don't respond to mean messages",
+                "Block and report bullies"
+            ],
+            "Safe Browsing": [
+                "Look for 'HTTPS' in website addresses",
+                "Don't click on suspicious links",
+                "Be careful with public Wi-Fi",
+                "Keep your software updated"
+            ],
+            "Digital Footprint": [
+                "Everything you do online leaves a trace",
+                "Think before you post - it can last forever",
+                "Your online actions can affect your future",
+                "Be kind and respectful online"
+            ]
+        };
+
+        // --- Game State Variables ---
+        let score = 0;
+        let timer;
+        let timeLeft = 60;
+        let currentLevel = 1;
+        let levelScore = 0;
+        let availableQuestions = [];
+        let highScore = localStorage.getItem('digitalSafetyHighScore') || 0;
+        let questionsAnswered = 0;
+        const questionsPerLevel = 3;
+
+        // --- Game Logic ---
+        function init() {
+            highScoreDisplay.textContent = highScore;
+            startGameBtn.addEventListener('click', () => {
+                clickSound();
+                startGame();
+            });
+            reviewBtn.addEventListener('click', () => {
+                clickSound();
+                showReview();
+            });
+            backToHomeBtn.addEventListener('click', () => {
+                clickSound();
+                showPage('homepage');
+            });
+            nextLevelBtn.addEventListener('click', () => {
+                clickSound();
+                startNextLevel();
+            });
+            reviewAfterBtn.addEventListener('click', () => {
+                clickSound();
+                showReview();
+            });
+            playAgainBtn.addEventListener('click', () => {
+                clickSound();
+                showPage('homepage');
+            });
+        }
+
+        function showReview() {
+            reviewContent.innerHTML = '';
+            Object.entries(reviewTopics).forEach(([topic, tips]) => {
+                const topicDiv = document.createElement('div');
+                topicDiv.className = 'bg-white p-4 rounded-lg shadow-md';
+                topicDiv.innerHTML = `
+                    <h3 class="text-xl font-bold text-purple-600 mb-3">🛡️ ${topic}</h3>
+                    <ul class="space-y-2">
+                        ${tips.map(tip => `<li class="text-slate-700 flex items-start">
+                            <span class="text-green-500 mr-2">✓</span>
+                            ${tip}
+                        </li>`).join('')}
+                    </ul>
+                `;
+                reviewContent.appendChild(topicDiv);
+            });
+            showPage('review-page');
+        }
+
+        function startGame() {
+            score = 0;
+            levelScore = 0;
+            currentLevel = 1;
+            questionsAnswered = 0;
+            timeLeft = 60;
+            currentScoreDisplay.textContent = score;
+            currentLevelDisplay.textContent = currentLevel;
+            timeDisplay.textContent = timeLeft;
+            availableQuestions = [...questionsByLevel[currentLevel]];
+            showPage('quiz-page');
+            nextQuestion();
+            startTimer();
+        }
+
+        function startNextLevel() {
+            currentLevel++;
+            levelScore = 0;
+            questionsAnswered = 0;
+            timeLeft = 60;
+            currentLevelDisplay.textContent = currentLevel;
+            timeDisplay.textContent = timeLeft;
+            
+            if (questionsByLevel[currentLevel]) {
+                availableQuestions = [...questionsByLevel[currentLevel]];
+                showPage('quiz-page');
+                nextQuestion();
+                startTimer();
+            } else {
+                // Game complete - all levels finished
+                endGame();
+            }
+        }
+
+        function startTimer() {
+            timer = setInterval(() => {
+                timeLeft--;
+                timeDisplay.textContent = timeLeft;
+                updateTimerBar();
+                if (timeLeft <= 0) {
+                    clearInterval(timer);
+                    endGame();
+                }
+            }, 1000);
+        }
+
+        function updateTimerBar() {
+            const percentage = (timeLeft / 60) * 100;
+            timerBar.style.width = `${percentage}%`;
+            if (timeLeft < 15) {
+                timerBar.style.background = 'linear-gradient(90deg, #ef4444, #dc2626)';
+            } else if (timeLeft < 30) {
+                timerBar.style.background = 'linear-gradient(90deg, #f59e0b, #d97706)';
+            } else {
+                timerBar.style.background = 'linear-gradient(90deg, #3b82f6, #1d4ed8)';
+            }
+        }
+
+        function nextQuestion() {
+            if (availableQuestions.length === 0) {
+                availableQuestions = [...questionsByLevel[currentLevel]];
+            }
+            
+            const questionIndex = Math.floor(Math.random() * availableQuestions.length);
+            const question = availableQuestions.splice(questionIndex, 1)[0];
+
+            questionText.textContent = question.q;
+            answersGrid.innerHTML = '';
+            question.a.forEach((answer, index) => {
+                const button = document.createElement('button');
+                button.textContent = answer;
+                button.classList.add('answer-btn', 'w-full', 'p-4', 'bg-white', 'border-2', 'border-slate-300', 'rounded-lg', 'shadow-sm', 'hover:bg-slate-100', 'font-semibold');
+                button.onclick = () => handleAnswer(index, question.correct, question.points, button);
+                answersGrid.appendChild(button);
+            });
+        }
+
+        function handleAnswer(selectedIndex, correctIndex, points, button) {
+            const buttons = answersGrid.querySelectorAll('button');
+            buttons.forEach(btn => btn.disabled = true);
+
+            if (selectedIndex === correctIndex) {
+                correctSound();
+                button.classList.add('correct');
+                score += points;
+                levelScore += points;
+                currentScoreDisplay.textContent = score;
+                adjustTime(true);
+            } else {
+                wrongSound();
+                button.classList.add('wrong');
+                buttons[correctIndex].classList.add('correct');
+                adjustTime(false);
+            }
+
+            questionsAnswered++;
+            
+            if (questionsAnswered >= questionsPerLevel) {
+                setTimeout(() => {
+                    if (questionsByLevel[currentLevel + 1]) {
+                        showLevelComplete();
+                    } else {
+                        endGame();
+                    }
+                }, 1200);
+            } else {
+                setTimeout(nextQuestion, 1200);
+            }
+        }
+
+        function showLevelComplete() {
+            levelUpSound();
+            levelScoreDisplay.textContent = levelScore;
+            nextLevelDisplay.textContent = currentLevel + 1;
+            clearInterval(timer);
+            showPage('level-complete-page');
+        }
+
+        function adjustTime(isCorrect) {
+            let timeChange = 0;
+            if (isCorrect) {
+                timeChange = 10; // +10 seconds for correct answers
+            } else {
+                timeChange = -5; // -5 seconds for wrong answers
+            }
+            timeLeft += timeChange;
+            if (timeLeft > 60) timeLeft = 60;
+            timeDisplay.textContent = timeLeft;
+            updateTimerBar();
+        }
+
+        function endGame() {
+            gameOverSound();
+            if (score > highScore) {
+                highScore = score;
+                localStorage.setItem('digitalSafetyHighScore', highScore);
+            }
+            finalScoreDisplay.textContent = score;
+            resultsHighScoreDisplay.textContent = highScore;
+            displayMedal(score);
+            showPage('results-page');
+        }
+
+        function displayMedal(finalScore) {
+            let medal = { emoji: '🤔', text: 'Keep Practicing, Hero!' };
+            
+            if (finalScore >= 300) {
+                medal = { emoji: '👑', text: 'Legendary Digital Safety Hero!' };
+            } else if (finalScore >= 200) {
+                medal = { emoji: '🥇', text: 'Gold Medal Hero!' };
+            } else if (finalScore >= 100) {
+                medal = { emoji: '🥈', text: 'Silver Medal Hero!' };
+            } else if (finalScore >= 50) {
+                medal = { emoji: '🥉', text: 'Bronze Medal Hero!' };
+            }
+            medalEmoji.textContent = medal.emoji;
+            medalText.textContent = medal.text;
+        }
+
+        function showPage(pageId) {
+            homepage.classList.add('hidden');
+            reviewPage.classList.add('hidden');
+            quizPage.classList.add('hidden');
+            levelCompletePage.classList.add('hidden');
+            resultsPage.classList.add('hidden');
+            document.getElementById(pageId).classList.remove('hidden');
+        }
+
+        // --- Initialize ---
+        init();
+    </script>
+</body>
+</html>
