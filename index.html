@@ -163,9 +163,14 @@
                         Level <span id="current-level">1</span>
                     </div>
                 </div>
-                <div>
-                    <span class="font-semibold text-slate-600">⏰ Time:</span>
-                    <span id="time-display" class="font-bold text-xl text-red-600">60</span>s
+                <div class="flex items-center space-x-4">
+                    <div>
+                        <span class="font-semibold text-slate-600">⏰ Time:</span>
+                        <span id="time-display" class="font-bold text-xl text-red-600">60</span>s
+                    </div>
+                    <button id="skip-game-btn" class="bg-gradient-to-r from-red-500 to-pink-500 hover:from-red-600 hover:to-pink-600 text-white font-bold py-2 px-4 rounded-lg shadow-lg transition-all transform hover:scale-105 text-sm">
+                        🚪 Exit Game
+                    </button>
                 </div>
             </div>
             <div class="w-full bg-gray-200 rounded-full h-4 mb-4 shadow-inner">
@@ -188,12 +193,17 @@
                 <p class="text-2xl font-bold text-slate-700">Power Gained: <span id="level-score" class="text-green-600">0</span></p>
             </div>
             <div class="bg-gradient-to-r from-green-50 to-emerald-50 p-6 rounded-lg shadow-inner mb-6">
-                <p class="text-slate-700 text-lg">Ready for the next challenge?</p>
+                <p class="text-slate-700 text-lg">What would you like to do next?</p>
                 <p class="text-3xl font-bold text-green-700 my-2">Level <span id="next-level">2</span> Awaits!</p>
             </div>
-            <button id="next-level-btn" class="bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white font-bold py-3 px-8 rounded-lg shadow-lg transition-all transform hover:scale-105">
-                🚀 Continue Quest
-            </button>
+            <div class="flex flex-col sm:flex-row gap-4 justify-center">
+                <button id="next-level-btn" class="bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white font-bold py-3 px-8 rounded-lg shadow-lg transition-all transform hover:scale-105">
+                    🚀 Continue Quest
+                </button>
+                <button id="stop-quest-btn" class="bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white font-bold py-3 px-8 rounded-lg shadow-lg transition-all transform hover:scale-105">
+                    🏠 Stop & Go Home
+                </button>
+            </div>
         </div>
 
         <!-- Results Section -->
@@ -253,6 +263,8 @@
         const reviewContent = document.getElementById('review-content');
         const levelScoreDisplay = document.getElementById('level-score');
         const nextLevelDisplay = document.getElementById('next-level');
+        const skipGameBtn = document.getElementById('skip-game-btn');
+        const stopQuestBtn = document.getElementById('stop-quest-btn');
 
         // --- Questions Database by Level ---
         const questionsByLevel = {
@@ -350,6 +362,14 @@
             playAgainBtn.addEventListener('click', () => {
                 clickSound();
                 showPage('homepage');
+            });
+            skipGameBtn.addEventListener('click', () => {
+                clickSound();
+                skipGame();
+            });
+            stopQuestBtn.addEventListener('click', () => {
+                clickSound();
+                stopQuest();
             });
         }
 
@@ -529,6 +549,30 @@
             }
             medalEmoji.textContent = medal.emoji;
             medalText.textContent = medal.text;
+        }
+
+        function skipGame() {
+            // Clear the timer
+            if (timer) {
+                clearInterval(timer);
+            }
+            // Reset game state
+            score = 0;
+            levelScore = 0;
+            currentLevel = 1;
+            questionsAnswered = 0;
+            timeLeft = 60;
+            // Return to homepage
+            showPage('homepage');
+        }
+
+        function stopQuest() {
+            // Clear the timer
+            if (timer) {
+                clearInterval(timer);
+            }
+            // End the game and show results with current score
+            endGame();
         }
 
         function showPage(pageId) {
